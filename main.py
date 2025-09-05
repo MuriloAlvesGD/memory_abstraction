@@ -24,34 +24,42 @@ class LinkedList:
     def __init__(self):
         self.head = Node(None, 128)
 
+    def calcNodeSize(self, process):
+        if process.size%2 == 0:
+            return process.size
+        else:
+            return process.size + 1
+
     def addProcess(self, process):
         
         if self.lastFree >= process.size:
             self.firstFit(self.head, process)
         else:
             self.bestFit(self.head, process, None)
-            
 
-    def firstFit(self, prev, process):
-        if prev.isEmpty and prev.size >= process.size:
-            temp = Node(None, prev.size - process.size)
-            prev.next = temp
-            prev.process = process
-            prev.size = process.size
-            prev.isEmpty = False
-            self.lastFree -= process.size
+
+    def firstFit(self, node, process):
+        if node.isEmpty and node.size >= process.size:
+            newNodeSize = self.calcNodeSize(process)
+            temp = Node(None, node.size - newNodeSize)
+            node.next = temp
+            node.process = process
+            node.size = newNodeSize
+            node.isEmpty = False
+            self.lastFree -= newNodeSize
         else:
-            self.firstFit(prev.next, process)
+            self.firstFit(node.next, process)
     
     
-    def bestFit(self, prev, process, minor):
-        if prev is None:
+    def bestFit(self, node, process, minor):
+        if node is None:
             if minor is not None:
                 self.lastFree = 0
-                free = minor.size - process.size
+                newNodeSize = self.calcNodeSize(process)
+                free = minor.size - newNodeSize
 
                 minor.process = process
-                minor.size = process.size
+                minor.size = newNodeSize
                 minor.isEmpty = False
 
                 if free > 0:
@@ -67,17 +75,17 @@ class LinkedList:
                         temp.next = minor.next
                         minor.next = temp
 
-        elif prev.size < process.size:
-            self.bestFit(prev.next, process, minor)
+        elif node.size < process.size:
+            self.bestFit(node.next, process, minor)
         
         else:
             if minor is None:
-                minor = prev
+                minor = node
             
-            if prev.size >= minor.size:
-                self.bestFit(prev.next, process, minor)
+            if node.size >= minor.size:
+                self.bestFit(node.next, process, minor)
             else:
-                self.bestFit(prev.next, process, prev)
+                self.bestFit(node.next, process, node)
             
 
 

@@ -6,80 +6,101 @@ class Process:
         self.name = f"Process-{i}"
 
 class Node:
-    def __init__ (self, value):
-        self.value = value
+    def __init__ (self, process, size):
         self.next = None
 
+        if process is None:
+            self.isEmpty = True
+            self.size = size
+        else:
+            self.process = process
+            self.size = process.size
+            self.isEmpty = False
+
+
 class LinkedList:
-    totalSize = 128
-    freeSize = 128
+    lastFree = 128
     
     def __init__(self):
-        self.head = None
-
+        self.head = Node(None, 128)
 
     def addProcess(self, process):
-        newNode = Node(process)
         
-        if self.head is None:
-            self.head = newNode
-            self.freeSize -= process.size
-            
-        elif self.freeSize >= process.size:
-                self.firstFit(self.head, newNode)
-                self.freeSize -= process.size
-            
+        if self.lastFree >= process.size:
+            self.firstFit(self.head, process)
         else:
-            self.bestFit(self.head, newNode, None)
-       
+            self.bestFit(self.head, process, None)
+            
+
+    def firstFit(self, prev, process):
+        if prev.isEmpty and prev.size >= process.size:
+            temp = Node(None, prev.size - process.size)
+            prev.next = temp
+            prev.process = process
+            prev.size = process.size
+            prev.isEmpty = False
+            self.lastFree -= process.size
+        else:
+            self.firstFit(prev.next, process)
     
     
-    def firstFit(self, prev, node):
-        if prev.next is None:
-            prev.next = node
-        else:
-            self.firstFit(prev.next, node)
-            
-            
-            
-            
-    def bestFit(self, prev, node, minor):
+    def bestFit(self, prev, process, minor):
         if prev is None:
             if minor is not None:
-                self.freeSize += minor.value.size - node.value.size
-                minor.value = node.value
+                self.lastFree = 0
+                free = minor.size - process.size
 
-        
-        elif prev.value.size < node.value.size:
-            self.bestFit(prev.next, node, minor)
+                minor.process = process
+                minor.size = process.size
+                minor.isEmpty = False
+
+                if free > 0:
+                    if minor.next is None:
+                        temp = Node(None, free)
+                        temp.next = minor.next
+                        minor.next = temp
+
+                    elif minor.next.isEmpty:
+                        minor.next.size += free
+                    else:
+                        temp = Node(None, free)
+                        temp.next = minor.next
+                        minor.next = temp
+
+        elif prev.size < process.size:
+            self.bestFit(prev.next, process, minor)
         
         else:
             if minor is None:
                 minor = prev
             
-            if prev.value.size >= minor.value.size:
-                self.bestFit(prev.next, node, minor)
+            if prev.size >= minor.size:
+                self.bestFit(prev.next, process, minor)
             else:
-                self.bestFit(prev.next, node, prev)
+                self.bestFit(prev.next, process, prev)
             
-    
-    #def worstFit():
-    
+
+
+
 list = LinkedList()
 for i in range(4):
-    print(f"Espaço livre: {list.freeSize}")
+    print(f"Espaço livre: {list.lastFree}")
     p = Process(i)
     print (p.name)
     print(f"Tamanho da Inserção: {p.size}")
     list.addProcess(p)
-    print(f"Espaço livre após inserção: {list.freeSize}")
+    print(f"Espaço livre após inserção: {list.lastFree}")
     print()
     
 
-print("estado final")
+print("ESTADO FINAL")
+print("--------")
+print("cabeça")
 n = list.head
 while(n is not None):
-    print("--------")
-    print(n.value.name)
-    print(n.value.size)
+    print(f"Está livre: {n.isEmpty}")
+    if not n.isEmpty:
+        print(f"Alocado por: {n.process.name}")
+    print(f"Tamanho: {n.size}")
+    print("--vvv--")
     n = n.next
